@@ -3,8 +3,8 @@ nebulaBK
 
 ##nebulaBK##
 
-Description: Bash backup script for OpenStack.
+Description: Bash backup script for Nebula OpenStack.
 
 
-Usage: ./nebula-main.sh (and follow the prompts).
+Usage: ./nebulabk-main.sh (and follow the prompts).
 
