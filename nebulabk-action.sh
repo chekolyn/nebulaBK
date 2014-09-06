@@ -335,21 +335,28 @@ download_single_image()
 		if [[ $TEST == "Y" ]] ; then
 			echo ""${GLANCE_CMD} image-download --file "${DIR}/${FILE_NAME}" --progress $IMAGE_ID""
 		else
-			echo -e "| ${lt_grn} IMAGE Download file: ${DIR}/${FILE_NAME} ${NC}"
+			echo -e "| ${lt_grn} IMAGE Downloading file: ${DIR}/${FILE_NAME} ${NC}"
 			echo "| IMAGE Download start: $(date)"
+			# Download command:
 			${GLANCE_CMD} image-download --file "${DIR}/${FILE_NAME}" --progress $IMAGE_ID
 			echo "| IMAGE Download end: $(date)"
 
-			# Validate image according to size:
-			FILE_SIZE=`stat -c%s "${DIR}/${FILE_NAME}"`
-			echo "| *** Checking downloaded file: ${DIR}/${FILE_NAME}"
-			echo "| FILE_SIZE= ${FILE_SIZE}"
-			echo "| IMAGE_SIZE= ${IMAGE_SIZE}"
+			# Check to see if file was downloaded:
+			if [[ -f ${DIR}/${FILE_NAME} ]] ; then
+				# Validate image according to size:
+				FILE_SIZE=`stat -c%s "${DIR}/${FILE_NAME}"`
+				echo "| *** Checking downloaded file: ${DIR}/${FILE_NAME}"
+				echo "| FILE_SIZE= ${FILE_SIZE}"
+				echo "| IMAGE_SIZE= ${IMAGE_SIZE}"
 
-			if [[ $FILE_SIZE == $IMAGE_SIZE ]] ; then
-				echo -e "| +++ ${lt_grn} IMAGE FILE Downloaded; size OK ${NC}"
+				if [[ $FILE_SIZE == $IMAGE_SIZE ]] ; then
+					echo -e "| +++ ${lt_grn} IMAGE FILE Downloaded; size OK ${NC}"
+				else
+					echo -e "| --- ${red} IMAGE FILE Downloaded; size MISMATCH ${NC}"
+				fi
+
 			else
-				echo -e "| --- ${red} IMAGE FILE Downloaded; size MISMATCH ${NC}"
+				echo -e "| --- ${red} IMAGE Download FAILURE!! {NC}"
 			fi
 		fi
 	fi
