@@ -250,7 +250,7 @@ save_bu_images_parallel()
 	export -f download_single_image
 
 	# Execute if list has items:
-	if [[ $LIST =="" ]] ; then
+	if [[ $LIST == "" ]] ; then
 		echo "| **********************  "
 		echo "| SKIPPING not images to download"
 		echo "| Tenant ID: $PROJECT Name: $PROJECT_NAME"
