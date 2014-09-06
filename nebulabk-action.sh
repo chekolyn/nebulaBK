@@ -249,8 +249,15 @@ save_bu_images_parallel()
 	# EXPORT Function for Parallel:
 	export -f download_single_image
 
-	# Run downloads in parallel:
-	parallel -j $ACTION_JOBS download_single_image ::: $LIST ::: $PROJECT ::: $PROJECT_NAME ::: $DIR ::: $TEST
+	# Execute if list has items:
+	if [[ $LIST =="" ]] ; then
+		echo "| **********************  "
+		echo "| SKIPPING not images to download"
+		echo "| Tenant ID: $PROJECT Name: $PROJECT_NAME"
+	else
+		# Run downloads in parallel:
+		parallel -j $ACTION_JOBS download_single_image ::: $LIST ::: $PROJECT ::: $PROJECT_NAME ::: $DIR ::: $TEST
+	fi
 
 }
 
