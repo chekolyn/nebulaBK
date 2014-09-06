@@ -302,7 +302,7 @@ download_single_image()
 
 	# Check for existing file; 2nd round pass don't redownload:
 	if [[ -f ${DIR}/${FILE_NAME} ]] ; then
-		FILE_SIZE=$(stat -c%s ${DIR}/${FILE_NAME})
+		FILE_SIZE=`stat -c%s "${DIR}/${FILE_NAME}"`
 		echo "| *** Checking existing file: ${DIR}/${FILE_NAME}"
 		echo "| FILE_SIZE= ${FILE_SIZE}"
 		echo "| IMAGE_SIZE= ${IMAGE_SIZE}"
