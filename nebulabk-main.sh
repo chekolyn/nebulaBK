@@ -13,14 +13,10 @@ snapshot_trigger()
     set_user admin
     create_bu_user
 
-    if [[ $TEST = "Y" ]] ; then
-	local LIST=$TEST_LIST
-    fi
-
     if [[ $1 = "all" ]] ; then
 	# step through all the projects that are enabled, and d/l  the images owned by that project
-	#local LIST=`${KEYSTONE_CMD}  tenant-list | sed -n '4,$ p' | sed -n '$! p' | sed "s/ //g" | grep True | grep -v ${NEW_BU_OS_TENANT_ID} | awk -F\| '{ print $2 }'`
-	local LIST=$TEST_LIST # testing
+	local LIST=`${KEYSTONE_CMD}  tenant-list | sed -n '4,$ p' | sed -n '$! p' | sed "s/ //g" | grep True | grep -v ${NEW_BU_OS_TENANT_ID} | awk -F\| '{ print $2 }'`
+	#local LIST=$TEST_LIST # testing
 	echo "+-------------- Step through the Projects, Snapshot and Download the Instances -------------+"
 	echo "Full trigger not yet enabled"
     elif [[ $1 = "project" ]] ; then
@@ -52,16 +48,11 @@ image_trigger()
     set_user admin
     create_bu_user
 
-    if [[ $TEST = "Y" ]] ; then
-	local LIST=$TEST_LIST
-    fi
-
     if [[ $1 = "all" ]] ; then
 	# step through all the projects that are enabled, and d/l  the images owned by that project
-	#local LIST=`${KEYSTONE_CMD}  tenant-list | sed -n '4,$ p' | sed -n '$! p' | sed "s/ //g" | grep True | grep -v ${NEW_BU_OS_TENANT_ID} | awk -F\| '{ print $2 }'`
-	local LIST=$TEST_LIST # testing
-	echo "+-------------- Step through the Projects, Snapshot and Download the Instances -------------+"
-	echo "Full trigger not yet enabled"
+	local LIST=`${KEYSTONE_CMD}  tenant-list | sed -n '4,$ p' | sed -n '$! p' | sed "s/ //g" | grep True | grep -v ${NEW_BU_OS_TENANT_ID} | awk -F\| '{ print $2 }'`
+	#local LIST=$TEST_LIST # testing
+	echo "+-------------- Step through ALL Projects, Snapshot and Download the Instances -------------+"
     elif [[ $1 = "project" ]] ; then
 	echo "+----------------------- Snapshot and back up Project Instances ------------------------+"
 	${KEYSTONE_CMD} tenant-list
