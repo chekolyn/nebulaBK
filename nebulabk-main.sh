@@ -9,11 +9,15 @@ source nebulabk-global.sh
 
 snapshot_trigger()
 {
+    # Create bu user:
+    set_user admin
+    create_bu_user
+
     if [[ $TEST = "Y" ]] ; then
 	local LIST=$TEST_LIST
     fi
-    
-    if [[ -z $1 ]] ; then
+
+    if [[ $1 = "all" ]] ; then
 	# step through all the projects that are enabled, and d/l  the images owned by that project
 	#local LIST=`${KEYSTONE_CMD}  tenant-list | sed -n '4,$ p' | sed -n '$! p' | sed "s/ //g" | grep True | grep -v ${NEW_BU_OS_TENANT_ID} | awk -F\| '{ print $2 }'`
 	local LIST=$TEST_LIST # testing
@@ -26,16 +30,12 @@ snapshot_trigger()
 	read PROJ
 	local LIST=$PROJ
     fi
-    
-    # Create bu user:
-    set_user admin
-    create_bu_user
-    
+
     echo "+---------------------------- Snapshot and Backup Instances in Parallel ---------------------------+"
     #parallel -j $TENANT_JOBS ./echo-test.sh  instance {1} ::: $LIST
     #parallel -j $TENANT_JOBS ./nebulabk-action.sh test {1} ::: $LIST
     parallel -j $TENANT_JOBS ./nebulabk-action.sh  instance {1} ::: $LIST
-    
+
     # Delete bu user:
     set_user admin
     delete_bu_user
@@ -48,11 +48,15 @@ snapshot_trigger()
 
 image_trigger()
 {
+    # Create bu user:
+    set_user admin
+    create_bu_user
+
     if [[ $TEST = "Y" ]] ; then
 	local LIST=$TEST_LIST
     fi
-    
-    if [[ -z $1 ]] ; then
+
+    if [[ $1 = "all" ]] ; then
 	# step through all the projects that are enabled, and d/l  the images owned by that project
 	#local LIST=`${KEYSTONE_CMD}  tenant-list | sed -n '4,$ p' | sed -n '$! p' | sed "s/ //g" | grep True | grep -v ${NEW_BU_OS_TENANT_ID} | awk -F\| '{ print $2 }'`
 	local LIST=$TEST_LIST # testing
@@ -65,16 +69,12 @@ image_trigger()
 	read PROJ
 	local LIST=$PROJ
     fi
-    
-    # Create bu user:
-    set_user admin
-    create_bu_user
-    
+
     echo "+---------------------------- Snapshot and Backup Instances in Parallel ---------------------------+"
     #parallel -j $TENANT_JOBS ./echo-test.sh  instance {1} ::: $LIST
     #parallel -j $TENANT_JOBS ./nebulabk-action.sh test {1} ::: $LIST
     parallel -j $TENANT_JOBS ./nebulabk-action.sh  images {1} ::: $LIST
-    
+
     # Delete bu user:
     set_user admin
     delete_bu_user
@@ -87,7 +87,7 @@ image_trigger()
 
 # main() starts here
 
-tempfile="cmd.done" 
+tempfile="cmd.done"
 touch ${tempfile}
 
 case "${OS_COLOR}" in
@@ -116,7 +116,7 @@ roles
 
 while [ -f ${tempfile} ]; do
 
-	echo 
+	echo
 	if [[ ${TEST} == "Y" ]] ; then
 		echo -e "${red} --- TEST Mode Set --- ${NC}"
 	else
@@ -149,9 +149,9 @@ while [ -f ${tempfile} ]; do
 	echo " 8) swich users"
  	echo " 9) Backup user admin"
 	echo "     a) Show bu user"
-	echo "     b) add bu user"   
-	echo "     c) delete bu user"   
-	echo 
+	echo "     b) add bu user"
+	echo "     c) delete bu user"
+	echo
 
 	read OPTION
 
@@ -163,10 +163,10 @@ while [ -f ${tempfile} ]; do
 	1)
 		show_credentials
 		;;
-	2a) 
+	2a)
 		${GLANCE_CMD} image-list
 		;;
-	2b) 
+	2b)
 		${GLANCE_CMD} image-list
 		;;
 	3a)
@@ -190,12 +190,12 @@ while [ -f ${tempfile} ]; do
 		${SWIFT_CMD} list
 		;;
 	6a)
-		image_trigger
+		image_trigger all
 		;;
 	6b)
 		image_trigger project
 		;;
-	7a)	snapshot_trigger
+	7a)	snapshot_trigger all
 		;;
 	7b)	snapshot_trigger project
 		;;
@@ -208,20 +208,20 @@ while [ -f ${tempfile} ]; do
 	9b)
 		create_bu_user
 		;;
-	
+
 	9c)
 		delete_bu_user
 		;;
-	
+
 	10)
 		env | grep OS_
 		;;
-	
-	11) 
+
+	11)
 		env
 		show_vars
 		;;
-	
+
 	*)
 		rm ${tempfile}
 		exit
