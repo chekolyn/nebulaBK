@@ -26,9 +26,17 @@ ADMIN_CRED=$HOME/Nebula_Credentials/parc-scloud-admin
 SCRIPT=openrc.sh
 NEW_BU_USER_CRED_FILE=$CREDENTIALS_DIR/tmp_new_bu_user_cred.sh
 
+# COLORS:
+# Linux Colors
+red='\e[0;31m'
+lt_brn='\e[0;33m'
+lt_blue='\e[1;34m'
+lt_grn='\e[1;32m'
+NC='\e[0m' # No Color
+
 ### TEST VARS ###
-#TEST="N"
-TEST="Y"
+TEST="N"
+#TEST="Y"
 TEST_LIST="41e6d28a3ece4fcd82ded50017a5664e 663618ccba364ff1baea2c454ce68ea6" #Sergio, Alissa
 #TEST_LIST="41e6d28a3ece4fcd82ded50017a5664e 663618ccba364ff1baea2c454ce68ea6"
 

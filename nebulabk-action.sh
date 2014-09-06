@@ -235,13 +235,21 @@ download_images()
 
 save_bu_images_parallel()
 {
+	# Include Global variables:
+	source nebulabk-global.sh
+
 	local PROJECT=$1
 	local DIR=$2
 
 	set_bu_user
 
 	echo "TEST ${TEST}"
-	show_vars
+	#show_vars
+
+	echo "+---------------------------------------------------------------------------------------+"
+	echo -e "| ${lt_grn} Tenant ID: $PROJECT Name: $PROJECT_NAME  ${NC}"
+	echo "+---------------------------------------------------------------------------------------+"
+
 	# List images:
 	${GLANCE_CMD} image-list --owner $PROJECT
 	LIST=`${GLANCE_CMD} image-list --owner $PROJECT | grep -wi "active" | sed "s/ //g" | awk -F\| '{ print $2 }'`
@@ -251,9 +259,10 @@ save_bu_images_parallel()
 
 	# Execute if list has items:
 	if [[ $LIST == "" ]] ; then
-		echo "| **********************  "
-		echo "| SKIPPING not images to download"
-		echo "| Tenant ID: $PROJECT Name: $PROJECT_NAME"
+		echo "+---------------------------------------------------------------------------------------+"
+		echo -e "| ${lt_brn} --- SKIPPING no images to download--- ${NC}"
+		echo "+---------------------------------------------------------------------------------------+"
+
 	else
 		# Run downloads in parallel:
 		parallel -j $ACTION_JOBS download_single_image ::: $LIST ::: $PROJECT ::: $PROJECT_NAME ::: $DIR ::: $TEST
@@ -273,7 +282,7 @@ download_single_image()
 	local TEST=$5
 
 	if [ "$#" -ne 5 ] ; then
-		echo "Function snapshot_save_single_instance: Not enoght arguments... terminating"
+		echo -e "${red} Function snapshot_save_single_instance: Not enoght arguments... terminating ${NC}"
 		exit
 	fi
 
@@ -302,8 +311,8 @@ download_single_image()
 
 	# Validate image ownership:
 	if [[ $PROJECT != $IMAGE_OWNER ]] ; then
-		echo "| *** Image is not owned by ProjectID: ${PROJECT}"
-		echo "| *** Skipping download"
+		echo -e "| *** ${red} Image is not owned by ProjectID: ${PROJECT} ${NC}"
+		echo -e "| *** ${lt_brn} Skipping download ${NC}"
 		DOWNLOAD=false
 	fi
 
@@ -315,8 +324,8 @@ download_single_image()
 		echo "| IMAGE_SIZE= ${IMAGE_SIZE}"
 
 		if [[ $FILE_SIZE == $IMAGE_SIZE ]] ; then
-			echo "| +++ IMAGE FILE ALREADY Downloaded; size OK"
-			echo "| *** Skipping download"
+			echo -e "| ${lt_grn}+++ IMAGE FILE ALREADY Downloaded; size OK ${NC}"
+			echo -e "| ${lt_brn}*** Skipping download ${NC}"
 			DOWNLOAD=false
 		fi
 	fi
@@ -326,7 +335,22 @@ download_single_image()
 		if [[ $TEST == "Y" ]] ; then
 			echo ""${GLANCE_CMD} image-download --file "${DIR}/${FILE_NAME}" --progress $IMAGE_ID""
 		else
+			echo -e "| ${lt_grn} IMAGE Download file: ${DIR}/${FILE_NAME} ${NC}"
+			echo "| IMAGE Download start: $(date)"
 			${GLANCE_CMD} image-download --file "${DIR}/${FILE_NAME}" --progress $IMAGE_ID
+			echo "| IMAGE Download end: $(date)"
+
+			# Validate image according to size:
+			FILE_SIZE=`stat -c%s "${DIR}/${FILE_NAME}"`
+			echo "| *** Checking downloaded file: ${DIR}/${FILE_NAME}"
+			echo "| FILE_SIZE= ${FILE_SIZE}"
+			echo "| IMAGE_SIZE= ${IMAGE_SIZE}"
+
+			if [[ $FILE_SIZE == $IMAGE_SIZE ]] ; then
+				echo -e "| +++ ${lt_grn} IMAGE FILE Downloaded; size OK ${NC}"
+			else
+				echo -e "| --- ${red} IMAGE FILE Downloaded; size MISMATCH ${NC}"
+			fi
 		fi
 	fi
 
