@@ -2,8 +2,18 @@
 
 ### Global variables script for parallel backup ###
 
+# Credentials
+CREDENTIALS_DIR=$HOME/Nebula_Credentials
+#ADMIN_CRED=$HOME/Nebula_Credentials/parc-xcloud-admin
+ADMIN_CRED=$HOME/Nebula_Credentials/parc-scloud-admin
+SCRIPT=openrc.sh
+NEW_BU_USER_CRED_FILE=$CREDENTIALS_DIR/tmp_new_bu_user_cred.sh
+
+# Get Dynamic DIR based on the credentials:
+OS_AUTH_URL_HOSTNAME=$(cat ${ADMIN_CRED}/${SCRIPT} | grep AUTH | awk -F'[//]' '{print $3}' | awk -F\: '{print $1}')
+
 # Backup paths:
-BK_DIR="/backups/nebula-test"
+BK_DIR="/backups/$OS_AUTH_URL_HOSTNAME"
 IMAGE_DIR="$BK_DIR/image-backup"
 INSTANCE_DIR="$BK_DIR/instance-backup"
 LOGDIR="$BK_DIR/logs"
@@ -19,13 +29,6 @@ SWIFT_CMD="swift --insecure"
 TENANT_JOBS=3
 ACTION_JOBS=3
 
-# Credentials
-CREDENTIALS_DIR=$HOME/Nebula_Credentials
-#ADMIN_CRED=$HOME/Nebula_Credentials/parc-xcloud-admin
-ADMIN_CRED=$HOME/Nebula_Credentials/parc-scloud-admin
-SCRIPT=openrc.sh
-NEW_BU_USER_CRED_FILE=$CREDENTIALS_DIR/tmp_new_bu_user_cred.sh
-
 # COLORS:
 # Linux Colors
 red='\e[0;31m'
@@ -35,8 +38,8 @@ lt_grn='\e[1;32m'
 NC='\e[0m' # No Color
 
 ### TEST VARS ###
-TEST="N"
-#TEST="Y"
+#TEST="N"
+TEST="Y"
 TEST_LIST="41e6d28a3ece4fcd82ded50017a5664e 663618ccba364ff1baea2c454ce68ea6" #Sergio, Alissa
 #TEST_LIST="41e6d28a3ece4fcd82ded50017a5664e 663618ccba364ff1baea2c454ce68ea6"
 
