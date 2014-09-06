@@ -244,19 +244,83 @@ save_bu_images_parallel()
 	show_vars
 	# List images:
 	${GLANCE_CMD} image-list --owner $PROJECT
+	LIST=`${GLANCE_CMD} image-list --owner $PROJECT | grep -wi "active" | sed "s/ //g" | awk -F\| '{ print $2 }'`
 
-	# Variables order for parallel, output from glance image-list:
-	#   1                                      2                                    3                4            5             6
-	#+--------------------------------------+---------------------------------+-------------+------------------+------------+--------+
-	#| ID                                   | Name                            | Disk Format | Container Format | Size       | Status |
-	#+--------------------------------------+---------------------------------+-------------+------------------+------------+--------+
+	# EXPORT Function for Parallel:
+	export -f download_single_image
 
-	if [[ $TEST == "Y" ]] ; then
-		# for now just echo the commands - to actually d/l the images comment out this and uncomment the following line
-		${GLANCE_CMD} image-list --owner $PROJECT | grep -v ^+ | cut -c3-| grep "active" | parallel -vv -j $ACTION_JOBS --line-buffer --colsep '\|'  echo ""${GLANCE_CMD} image-download --file "${DIR}/{2}.{3}" --progress {1}""
-		echo "|"
-	else
-		${GLANCE_CMD} image-list --owner $PROJECT | grep -v ^+ | cut -c3-| grep "active" | parallel -vv -j $ACTION_JOBS --line-buffer --colsep '\|'  ${GLANCE_CMD} image-download --file "${DIR}/{2}.{3}" --progress {1}
+	# Run downloads in parallel:
+	parallel -j $ACTION_JOBS download_single_image ::: $LIST ::: $PROJECT ::: $PROJECT_NAME ::: $DIR ::: $TEST
+
+}
+
+download_single_image()
+{
+	# Include Global variables:
+	source nebulabk-global.sh
+
+	local IMAGE_ID=$1
+	local PROJECT=$2
+	local PROJECT_NAME=$3
+	local DIR=$4
+	local TEST=$5
+
+	if [ "$#" -ne 5 ] ; then
+		echo "Function snapshot_save_single_instance: Not enoght arguments... terminating"
+		exit
+	fi
+
+	# Important:
+	set_bu_user
+
+	# Image vars:
+	IMAGE_FULL_INFO=$(${GLANCE_CMD} image-show $IMAGE_ID)
+	IMAGE_OWNER=$( echo "${IMAGE_FULL_INFO}" | grep " owner" | sed "s/ //g" | awk -F\| '{ print $3 }')
+	IMAGE_SIZE=$( echo "${IMAGE_FULL_INFO}" | grep size | sed "s/ //g" | awk -F\| '{ print $3 }')
+	IMAGE_NAME=$( echo "${IMAGE_FULL_INFO}" | grep name  | awk -F\| '{ print $3 }' | sed -e "s/^ //g" -e "s/[ ]*$//g")
+	IMAGE_DISK_FORMAT=$( echo "${IMAGE_FULL_INFO}" | grep disk_format |  sed "s/ //g"  |  awk -F\| '{ print $3 }')
+
+	DIR="${IMAGE_DIR}/${PROJECT}_${PROJECT_NAME}"
+	FILE_NAME="${IMAGE_NAME}.${IMAGE_DISK_FORMAT}"
+
+	DOWNLOAD=true
+
+	echo "| +++ IMAGE INFO +++"
+	echo "$IMAGE_FULL_INFO"
+	echo "| +++ VARS INFO +++"
+	echo "IMAGE NAME:$IMAGE_NAME"
+	echo "IMAGE SIZE:$IMAGE_SIZE"
+	echo "IMAGE OWNER:$IMAGE_OWNER"
+	echo "DISK FORMAT:$IMAGE_DISK_FORMAT"
+
+	# Validate image ownership:
+	if [[ $PROJECT != $IMAGE_OWNER ]] ; then
+		echo "| *** Image is not owned by ProjectID: ${PROJECT}"
+		echo "| *** Skipping download"
+		DOWNLOAD=false
+	fi
+
+	# Check for existing file; 2nd round pass don't redownload:
+	if [[ -f ${DIR}/${FILE_NAME} ]] ; then
+		FILE_SIZE=$(stat -c%s ${DIR}/${FILE_NAME})
+		echo "| *** Checking existing file: ${DIR}/${FILE_NAME}"
+		echo "| FILE_SIZE= ${FILE_SIZE}"
+		echo "| IMAGE_SIZE= ${IMAGE_SIZE}"
+
+		if [[ $FILE_SIZE == $IMAGE_SIZE ]] ; then
+			echo "| +++ IMAGE FILE ALREADY Downloaded; size OK"
+			echo "| *** Skipping download"
+			DOWNLOAD=false
+		fi
+	fi
+
+	# Download:
+	if [[ $DOWNLOAD == true ]] ; then
+		if [[ $TEST == "Y" ]] ; then
+			echo ""${GLANCE_CMD} image-download --file "${DIR}/${FILE_NAME}" --progress $IMAGE_ID""
+		else
+			${GLANCE_CMD} image-download --file "${DIR}/${FILE_NAME}" --progress $IMAGE_ID
+		fi
 	fi
 
 }
