@@ -356,7 +356,7 @@ download_single_image()
 				fi
 
 			else
-				echo -e "| --- ${red} IMAGE Download FAILURE!! {NC}"
+				echo -e "| --- ${red} IMAGE Download FAILURE!! ${NC}"
 			fi
 		fi
 	fi
