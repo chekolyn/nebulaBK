@@ -363,7 +363,7 @@ download_single_image()
 
 	# Save Image Info:
 	if [[ ! -f ${DIR}/${FILE_NAME}.info ]] ; then
-		echo "${IMAGE_FULL_INFO}" > ${DIR}/${FILE_NAME}.info
+		echo "${IMAGE_FULL_INFO}" > "${DIR}/${FILE_NAME}".info
 	fi
 }
 
