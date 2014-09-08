@@ -2,15 +2,49 @@
 
 ### Global variables script for parallel backup ###
 
+# Uncomment or write a nebulabk-local-config.sh file to source from
+# with the variables bellow:
+
 # Credentials
-CREDENTIALS_DIR=$HOME/Nebula_Credentials
+#CREDENTIALS_DIR=$HOME/Nebula_Credentials
 #ADMIN_CRED=$HOME/Nebula_Credentials/parc-xcloud-admin
-ADMIN_CRED=$HOME/Nebula_Credentials/parc-scloud-admin
-SCRIPT=openrc.sh
-NEW_BU_USER_CRED_FILE=$CREDENTIALS_DIR/tmp_new_bu_user_cred.sh
+#ADMIN_CRED=$HOME/Nebula_Credentials/parc-scloud-admin
+#SCRIPT=openrc.sh
+#NEW_BU_USER_CRED_FILE=$CREDENTIALS_DIR/tmp_new_bu_user_cred.sh
+
+### TEST VARS ###
+#TEST="N"
+#TEST="Y"
+#TEST_LIST="41e6d28a3ece4fcd82ded50017a5664e 663618ccba364ff1baea2c454ce68ea6"
+
+# Credentials and TEST Vars moved to local config file
+# to eased production and dev enviroments.
+
+# COLORS:
+# Linux Colors
+red='\e[0;31m'
+lt_brn='\e[0;33m'
+lt_blue='\e[1;34m'
+lt_grn='\e[1;32m'
+NC='\e[0m' # No Color
+
+## Dynamic Credentials and Test vars:
+if [[ -f nebulabk-local-config.sh ]] ; then
+	source  nebulabk-local-config.sh
+fi
+
+echo "$ADMIN_CRED"
+
+## Vars sanity check:
+## Check for ADMIN Credentials vars:
+if [[ -z "$ADMIN_CRED" ]] ; then
+	echo -e "${red} --- No Admin credentials found. Exiting ... ${NC}"
+	exit
+fi
 
 # Get Dynamic DIR based on the credentials:
 OS_AUTH_URL_HOSTNAME=$(cat ${ADMIN_CRED}/${SCRIPT} | grep AUTH | awk -F'[//]' '{print $3}' | awk -F\: '{print $1}')
+
 
 # Backup paths:
 BK_DIR="/backups/$OS_AUTH_URL_HOSTNAME"
@@ -28,21 +62,6 @@ SWIFT_CMD="swift --insecure"
 # Parallel Jobs:
 TENANT_JOBS=4
 ACTION_JOBS=1
-
-# COLORS:
-# Linux Colors
-red='\e[0;31m'
-lt_brn='\e[0;33m'
-lt_blue='\e[1;34m'
-lt_grn='\e[1;32m'
-NC='\e[0m' # No Color
-
-### TEST VARS ###
-#TEST="N"
-TEST="Y"
-TEST_LIST="41e6d28a3ece4fcd82ded50017a5664e 663618ccba364ff1baea2c454ce68ea6" #Sergio, Alissa
-#TEST_LIST="41e6d28a3ece4fcd82ded50017a5664e 663618ccba364ff1baea2c454ce68ea6"
-
 
 ### GLOBAL Functions ####
 
@@ -277,7 +296,7 @@ get_project_name()
 show_vars()
 {
 	echo -e "${lt_brn}+---------------------------------------------------------------------------------------+"
-	echo    "+-------------------------        PRINT VARIABLES        ------------------------------+"
+	echo    "+--------------------------        PRINT VARIABLES        ------------------------------+"
 	echo -e "+---------------------------------------------------------------------------------------+${NC}"
 
 	show_credentials
