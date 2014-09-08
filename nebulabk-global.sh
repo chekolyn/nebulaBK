@@ -26,8 +26,8 @@ KEYSTONE_CMD="keystone --insecure"
 SWIFT_CMD="swift --insecure"
 
 # Parallel Jobs:
-TENANT_JOBS=3
-ACTION_JOBS=3
+TENANT_JOBS=4
+ACTION_JOBS=1
 
 # COLORS:
 # Linux Colors
@@ -80,7 +80,7 @@ show_credentials()
 
 create_bu_user()
 {
-	# Sanity check, delete file if exists:
+	# If BK user credential files exist don't add it again:
 	if [[ -f $NEW_BU_USER_CRED_FILE ]] ; then
 		echo "BU User file seems to be present ... not creating!"
 

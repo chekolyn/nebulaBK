@@ -139,7 +139,7 @@ snapshot_save_single_instance()
 	IMAGE_SOURCE_DISK_FORMAT=`${GLANCE_CMD} image-show ${INSTANCE_IMAGE_SOURCE_ID} | grep disk_format |  sed "s/ //g"  |  awk -F\| '{ print $3 }'`
 
 	if [[ ${IMAGE_SOURCE_DISK_FORMAT} != "qcow2" ]] ; then
-		echo "Skiping ${INSTANCE_NAME}  image source file is not QCOW2"
+		echo -e "${red}Skiping ${INSTANCE_NAME}  image source file is not QCOW2 ${NC}"
 		${NOVA_CMD} show ${INSTANCE}
 		${GLANCE_CMD} image-show ${INSTANCE_IMAGE_SOURCE_ID}
 		exit
@@ -172,7 +172,7 @@ snapshot_save_single_instance()
 		echo '${NOVA_CMD} image-delete ${NEW_IMAGE_NAME}'
 		echo "|"
 	else
-		echo "| Image info:"
+		echo "| NEW Image info:"
 		${GLANCE_CMD} image-list --owner ${PROJECT} | grep  "${NEW_IMAGE_NAME}"
 		IMAGE=`${GLANCE_CMD} image-list --owner ${PROJECT} | grep "${NEW_IMAGE_NAME}" | grep -w "active" | sed "s/ //g" | awk -F\| '{ print $2 }'`
 		IMAGE_NAME=`${GLANCE_CMD} image-list | grep ${IMAGE} | awk -F\| '{ print $3 }' | sed -e "s/^ //g" -e "s/[ ]*$//g"`
@@ -247,7 +247,7 @@ save_bu_images_parallel()
 	#show_vars
 
 	echo "+---------------------------------------------------------------------------------------+"
-	echo -e "| ${lt_grn} Tenant ID: $PROJECT Name: $PROJECT_NAME  ${NC}"
+	echo -e "| ${lt_blue} Tenant ID: $PROJECT Name: $PROJECT_NAME  ${NC}"
 	echo "+---------------------------------------------------------------------------------------+"
 
 	# List images:
@@ -311,7 +311,7 @@ download_single_image()
 
 	# Validate image ownership:
 	if [[ $PROJECT != $IMAGE_OWNER ]] ; then
-		echo -e "| *** ${red} Image is not owned by ProjectID: ${PROJECT} ${NC}"
+		echo -e "| *** ${lt_brn} Image is not owned by ProjectID: ${PROJECT} ${NC}"
 		echo -e "| *** ${lt_brn} Skipping download ${NC}"
 		DOWNLOAD=false
 	fi
@@ -324,7 +324,7 @@ download_single_image()
 		echo "| IMAGE_SIZE= ${IMAGE_SIZE}"
 
 		if [[ $FILE_SIZE == $IMAGE_SIZE ]] ; then
-			echo -e "| ${lt_grn}+++ IMAGE FILE ALREADY Downloaded; size OK ${NC}"
+			echo -e "| ${lt_brn}+++ IMAGE FILE ALREADY Downloaded; size OK ${NC}"
 			echo -e "| ${lt_brn}*** Skipping download ${NC}"
 			DOWNLOAD=false
 		fi
@@ -361,6 +361,10 @@ download_single_image()
 		fi
 	fi
 
+	# Save Image Info:
+	if [[ ! -f ${DIR}/${FILE_NAME}.info ]] ; then
+		echo "${IMAGE_FULL_INFO}" > ${DIR}/${FILE_NAME}.info
+	fi
 }
 
 action_vars()
@@ -409,12 +413,17 @@ case "$TYPE" in
 
 	instance)
 		echo "ACTION: backing up instances for $PROJECT"
+		echo "+---------------------------------------------------------------------------------------+"
+		echo -e "|${lt_blue} ACTION: backing up INSTANCES for Tenant ID: $PROJECT Name: $PROJECT_NAME  ${NC}"
+		echo "+---------------------------------------------------------------------------------------+"
 		create_snapshots $PROJECT
 		;;
 
 	images)
-		echo "ACTION: backing up images for $PROJECT"
-	download_images $PROJECT
+		echo "+---------------------------------------------------------------------------------------+"
+		echo -e "|${lt_blue} ACTION: backing up IMAGES for Tenant ID: $PROJECT Name: $PROJECT_NAME  ${NC}"
+		echo "+---------------------------------------------------------------------------------------+"
+		download_images $PROJECT
 		;;
 
 	test)
@@ -425,13 +434,13 @@ case "$TYPE" in
 
 		DIR="${INSTANCE_DIR}/${PROJECT}_${PROJECT_NAME}"
 
-	set_bu_user
+		set_bu_user
 
-	# Show instances:
-	${NOVA_CMD} list --tenant
+		# Show instances:
+		${NOVA_CMD} list --tenant
 
-	# Show action vars:
-	action_vars
+		# Show action vars:
+		action_vars
 
 		set_user admin
 		delete_user_from_project $PROJECT
