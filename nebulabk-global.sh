@@ -27,6 +27,8 @@
 # COLORS:
 # Linux Colors
 red='\e[0;31m'
+yellow='\e[1;33m'
+lt_red='\e[1;31m'
 lt_brn='\e[0;33m'
 lt_blue='\e[1;34m'
 lt_grn='\e[1;32m'
@@ -36,8 +38,6 @@ NC='\e[0m' # No Color
 if [[ -f nebulabk-local-config.sh ]] ; then
 	source  nebulabk-local-config.sh
 fi
-
-echo "$ADMIN_CRED"
 
 ## Vars sanity check:
 ## Check for ADMIN Credentials vars:
@@ -301,6 +301,8 @@ show_vars()
 	echo -e "+---------------------------------------------------------------------------------------+${NC}"
 
 	show_credentials
+
+	echo "ADMIN_CRED: ${ADMIN_CRED}"
 
 	echo "+++ BU User +++"
 	show_bu_user
