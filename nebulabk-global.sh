@@ -17,6 +17,10 @@
 #TEST="Y"
 #TEST_LIST="41e6d28a3ece4fcd82ded50017a5664e 663618ccba364ff1baea2c454ce68ea6"
 
+# Parallel Jobs:
+#TENANT_JOBS=4
+#ACTION_JOBS=1
+
 # Credentials and TEST Vars moved to local config file
 # to eased production and dev enviroments.
 
@@ -59,9 +63,6 @@ GLANCE_CMD="glance --insecure"
 KEYSTONE_CMD="keystone --insecure"
 SWIFT_CMD="swift --insecure"
 
-# Parallel Jobs:
-TENANT_JOBS=4
-ACTION_JOBS=1
 
 ### GLOBAL Functions ####
 
