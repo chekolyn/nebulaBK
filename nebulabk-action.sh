@@ -314,6 +314,7 @@ download_single_image()
 		echo -e "| *** ${lt_brn} Image is not owned by ProjectID: ${PROJECT} ${NC}"
 		echo -e "| *** ${lt_brn} Skipping download ${NC}"
 		DOWNLOAD=false
+		exit
 	fi
 
 	# Check for existing file; 2nd round pass don't redownload:
@@ -361,8 +362,8 @@ download_single_image()
 		fi
 	fi
 
-	# Save Image Info:
-	if [[ ! -f ${DIR}/${FILE_NAME}.info ]] ; then
+	# Save Image Info, if image owner matches, and info file missing:
+	if [[ $PROJECT == $IMAGE_OWNER ]] && [[ ! -f ${DIR}/${FILE_NAME}.info ]] ; then
 		echo "${IMAGE_FULL_INFO}" > "${DIR}/${FILE_NAME}".info
 	fi
 }
