@@ -364,6 +364,7 @@ download_single_image()
 
 	# Save Image Info, if image owner matches, and info file missing:
 	if [[ $PROJECT == $IMAGE_OWNER ]] && [[ ! -f ${DIR}/${FILE_NAME}.info ]] ; then
+		echo "Saving image info. ID=${IMAGE_ID} Name=${IMAGE_NAME}"
 		echo "${IMAGE_FULL_INFO}" > "${DIR}/${FILE_NAME}".info
 	fi
 }
