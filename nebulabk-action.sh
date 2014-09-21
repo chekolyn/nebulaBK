@@ -116,7 +116,7 @@ snapshot_save_single_instance()
 	# Include Global variables:
 	source nebulabk-global.sh
 
-	local INSTANCE=$1
+	local INSTANCE_ID=$1
 	local PROJECT=$2
 	local PROJECT_NAME=$3
 	local DIR=$4
@@ -134,26 +134,34 @@ snapshot_save_single_instance()
 	# Important:
 	set_bu_user
 
-	INSTANCE_NAME=`${NOVA_CMD} list | grep ${INSTANCE} | awk -F\| '{ print $3 }' | sed -e "s/^ //g" -e "s/[ ]*$//g"`
-	INSTANCE_IMAGE_SOURCE_ID=`${NOVA_CMD} show ${INSTANCE} | grep image | sed "s/.*(\(.*\)).*/\1/"`
-	IMAGE_SOURCE_DISK_FORMAT=`${GLANCE_CMD} image-show ${INSTANCE_IMAGE_SOURCE_ID} | grep disk_format |  sed "s/ //g"  |  awk -F\| '{ print $3 }'`
+	# Instance vars:
+    INSTANCE_FULL_INFO=$(${NOVA_CMD} show ${INSTANCE_ID})
+    # Instance name sed: 1st to remove first space, 2nd to remove trailing spaces.
+	INSTANCE_NAME=$(echo "$INSTANCE_FULL_INFO" | grep "^| name" | awk -F\| '{ print $3 }' | sed -e "s/^ //g" -e "s/[ ]*$//g")
+	INSTANCE_IMAGE_SOURCE_ID=$(echo "$INSTANCE_FULL_INFO" | grep image | sed "s/.*(\(.*\)).*/\1/")
+	IMAGE_SOURCE_FULL_INFO=$(${GLANCE_CMD} image-show ${INSTANCE_IMAGE_SOURCE_ID})
+	IMAGE_SOURCE_DISK_FORMAT=$(echo "${IMAGE_SOURCE_FULL_INFO}"| grep disk_format |  sed "s/ //g"  |  awk -F\| '{ print $3 }')
 
 	if [[ ${IMAGE_SOURCE_DISK_FORMAT} != "qcow2" ]] ; then
 		echo -e "${red}Skiping ${INSTANCE_NAME}  image source file is not QCOW2 ${NC}"
-		${NOVA_CMD} show ${INSTANCE}
-		${GLANCE_CMD} image-show ${INSTANCE_IMAGE_SOURCE_ID}
+		echo "${INSTANCE_FULL_INFO}"
+		echo "${IMAGE_SOURCE_FULL_INFO}"
 		exit
 	fi
 
-	echo "| Instance ID : ${INSTANCE}"
+	echo "| Instance ID : ${INSTANCE_ID}"
 	echo "| Instance Name : ${INSTANCE_NAME}"
 	DATE=`date +%m%d%Y-%H:%M:%S`
-	NEW_IMAGE_NAME=${INSTANCE_NAME}.bu_snap.${DATE}
-	echo "| ${NOVA_CMD} image-create --show --poll ${INSTANCE}  ${NEW_IMAGE_NAME}"
+
+	# Remove slashes, prevents the filename to be wrong:
+	INSTANCE_NAME_NO_SLASH=$(echo ${INSTANCE_NAME} | sed -e "s/[\/]/-/g")
+
+	NEW_IMAGE_NAME=${INSTANCE_NAME_NO_SLASH}.bu_snap.${DATE}
+	echo "| ${NOVA_CMD} image-create --show --poll ${INSTANCE_ID}  ${NEW_IMAGE_NAME}"
 
 	if [[ $TEST != "Y" ]] ; then
 		echo "| Image create start: $(date)"
-		${NOVA_CMD} image-create --show --poll ${INSTANCE}  "${NEW_IMAGE_NAME}"
+		${NOVA_CMD} image-create --show --poll ${INSTANCE_ID}  "${NEW_IMAGE_NAME}"
 		echo "| Image create end: $(date)"
 	fi
 
@@ -163,7 +171,7 @@ snapshot_save_single_instance()
 
 	if [[ $TEST == "Y" ]] ; then
 		# for now just echo the commands - to actually d/l the images comment out this and uncomment the following line
-		echo '| Glance downlowding file: ${DIR}/${IMAGE_NAME}.${DISK_FORMAT}'
+		echo "| Glance downloading file: ${DIR}/${IMAGE_NAME}.${DISK_FORMAT}"
 		echo "| Glance download start: $(date)"
 		echo '${GLANCE_CMD} image-download --file "${DIR}/${IMAGE_NAME}.${DISK_FORMAT}" --progress ${IMAGE}'
 		echo "| Glance download end: $(date)"
@@ -172,28 +180,47 @@ snapshot_save_single_instance()
 		echo '${NOVA_CMD} image-delete ${NEW_IMAGE_NAME}'
 		echo "|"
 	else
-		echo "| NEW Image info:"
-		${GLANCE_CMD} image-list --owner ${PROJECT} | grep  "${NEW_IMAGE_NAME}"
-		IMAGE=`${GLANCE_CMD} image-list --owner ${PROJECT} | grep "${NEW_IMAGE_NAME}" | grep -w "active" | sed "s/ //g" | awk -F\| '{ print $2 }'`
-		IMAGE_NAME=`${GLANCE_CMD} image-list | grep ${IMAGE} | awk -F\| '{ print $3 }' | sed -e "s/^ //g" -e "s/[ ]*$//g"`
-		DISK_FORMAT=`${GLANCE_CMD} image-list | grep ${IMAGE} | grep "${NEW_IMAGE_NAME}" | sed "s/ //g" | awk -F\| '{ print $4 }'`
+		# Get IMAGE_ID:
+		NEW_IMAGE_FULL_INFO=$(${GLANCE_CMD} image-list --owner ${PROJECT} | grep -F """${NEW_IMAGE_NAME}""")
+		IMAGE_ID=$(echo "${NEW_IMAGE_FULL_INFO}" | grep -w "active" | sed "s/ //g" | awk -F\| '{ print $2 }')
 
-		echo "| NEW Image ID : ${IMAGE}"
+		# Image vars:
+		IMAGE_FULL_INFO=$(${GLANCE_CMD} image-show $IMAGE_ID)
+		IMAGE_OWNER=$( echo "${IMAGE_FULL_INFO}" | grep " owner" | sed "s/ //g" | awk -F\| '{ print $3 }')
+		IMAGE_SIZE=$( echo "${IMAGE_FULL_INFO}" | grep size | sed "s/ //g" | awk -F\| '{ print $3 }')
+		IMAGE_NAME=$( echo "${IMAGE_FULL_INFO}" | grep name  | awk -F\| '{ print $3 }' | sed -e "s/^ //g" -e "s/[ ]*$//g")
+		IMAGE_DISK_FORMAT=$( echo "${IMAGE_FULL_INFO}" | grep disk_format |  sed "s/ //g"  |  awk -F\| '{ print $3 }')
+
+		# File name:
+		FILE_NAME="${IMAGE_NAME}.${IMAGE_DISK_FORMAT}"
+
+		echo "| ++ NEW Image Info ++"
+		echo "| NEW Image ID : ${IMAGE_ID}"
 		echo "| NEW Image Name : ${IMAGE_NAME}"
-		echo "| NEW Image Format : ${DISK_FORMAT}"
+		echo "| NEW Image Format : ${IMAGE_DISK_FORMAT}"
+		echo "| NEW Image filename: ${FILE_NAME}"
+		echo "| ++ NEW Full INFO ++"
+		echo "${IMAGE_FULL_INFO}"
 
 		# Check if directory exist
 		if [[ -d ${DIR} ]] ; then
 			mkdir -p $DIR
 		fi
 
-		echo "| Glance downlowding file: ${DIR}/${IMAGE_NAME}.${DISK_FORMAT}"
+		# Glance Download:
+		echo "| Glance downloading file: ${DIR}/${FILE_NAME}"
 		echo "| Glance download start: $(date)"
-		${GLANCE_CMD} image-download --file "${DIR}/${IMAGE_NAME}.${DISK_FORMAT}" --progress ${IMAGE}
+		${GLANCE_CMD} image-download --file "${DIR}/${FILE_NAME}" --progress ${IMAGE_ID}
 		echo "| Glance download end: $(date)"
-		#echo ""| File status: $(file "${DIR}/${IMAGE_NAME}.${DISK_FORMAT}")""
-		echo "| Glance deleting temp snapshot ${NEW_IMAGE_NAME}"
-		${NOVA_CMD} image-delete "${NEW_IMAGE_NAME}"
+
+		# Save Image Info if info file missing:
+		if [[ ! -f ${DIR}/${FILE_NAME}.info ]] ; then
+			echo "Saving instance image info. IMAGE_ID:${IMAGE_ID} IMAGE_NAME:${IMAGE_NAME}"
+			${GLANCE_CMD} image-show ${IMAGE_ID} > "${DIR}/${FILE_NAME}".info
+		fi
+
+		echo "| Glance deleting temp snapshot IMAGE_ID:${IMAGE_ID} IMAGE_NAME:${IMAGE_NAME}"
+		${NOVA_CMD} image-delete "${IMAGE_ID}"
 		echo "|"
 
 	fi
