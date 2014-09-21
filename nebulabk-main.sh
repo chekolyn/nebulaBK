@@ -175,7 +175,8 @@ while [ -f ${tempfile} ]; do
 	3e)
 		${KEYSTONE_CMD} user-list
 		;;
-	4a)	${NOVA_CMD} list --all-tenants
+	4a)
+		${NOVA_CMD} list --all-tenants
 		;;
 	5)
 		${SWIFT_CMD} list
