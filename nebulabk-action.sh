@@ -96,7 +96,7 @@ snapshot_save_instances_parallel()
 	# EXPORT Function for Parallel:
 	export -f snapshot_save_single_instance
 
-	LIST=`${NOVA_CMD} list --tenant | grep -wi "active" | sed "s/ //g" | awk -F\| '{ print $2 }'`
+	LIST=`${NOVA_CMD} list --tenant | egrep -wi "active|shutoff" | sed "s/ //g" | awk -F\| '{ print $2 }'`
 	echo "| *** ACTION: snapshot_save_instances_parallel: LIST for parallel command ****"
 	echo "| Instances ID :"
 	echo ${LIST}
