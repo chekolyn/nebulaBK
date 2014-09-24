@@ -14,9 +14,18 @@ snapshot_trigger()
     create_bu_user
 
     if [[ $1 = "all" ]] ; then
+
+        # Get list from local file:
+        if [[ -f TENANT_LIST ]] ; then
+            local SOURCE_LIST=$(cat TENANT_LIST)
+        # Get list from keystone:
+        else
+            local SOURCE_LIST=$(${KEYSTONE_CMD}  tenant-list)
+        fi
+
 	# step through all the projects that are enabled, and d/l  the images owned by that project
-	local LIST=`${KEYSTONE_CMD}  tenant-list | sed -n '4,$ p' | sed -n '$! p' | sed "s/ //g" | grep True | grep -v ${NEW_BU_OS_TENANT_ID} | awk -F\| '{ print $2 }'`
-	#local LIST=$TEST_LIST # testing
+	local LIST=`echo "${SOURCE_LIST}" | sed -n '4,$ p' | sed -n '$! p' | sed "s/ //g" | grep True | grep -v ${NEW_BU_OS_TENANT_ID} | awk -F\| '{ print $2 }'`
+
 	echo "+-------------- Step through the Projects, Snapshot and Download the Instances -------------+"
 	echo "Full trigger not yet enabled"
     elif [[ $1 = "project" ]] ; then
