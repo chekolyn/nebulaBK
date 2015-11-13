@@ -23,17 +23,19 @@ snapshot_trigger()
             local SOURCE_LIST=$(${KEYSTONE_CMD}  tenant-list)
         fi
 
-	# step through all the projects that are enabled, and d/l  the images owned by that project
-	local LIST=`echo "${SOURCE_LIST}" | sed -n '4,$ p' | sed -n '$! p' | sed "s/ //g" | grep True | grep -v ${NEW_BU_OS_TENANT_ID} | awk -F\| '{ print $2 }'`
+		# step through all the projects that are enabled, and d/l  the images owned by that project
+		local LIST=`echo "${SOURCE_LIST}" | sed -n '4,$ p' | sed -n '$! p' | sed "s/ //g" | grep True | grep -v ${NEW_BU_OS_TENANT_ID} | awk -F\| '{ print $2 }'`
 
-	echo "+-------------- Step through the Projects, Snapshot and Download the Instances -------------+"
-	echo "Full trigger not yet enabled"
+		echo "+-------------- Step through the Projects, Snapshot and Download the Instances -------------+"
+		echo "Full trigger not yet enabled"
+
+
     elif [[ $1 = "project" ]] ; then
-	echo "+----------------------- Snapshot and back up Project Instances ------------------------+"
-	${KEYSTONE_CMD} tenant-list
-	echo -e "${lt_blue} Choose tenant (project) ID from list above${NC}"
-	read PROJ
-	local LIST=$PROJ
+		echo "+----------------------- Snapshot and back up Project Instances ------------------------+"
+		${KEYSTONE_CMD} tenant-list
+		echo -e "${lt_blue} Choose tenant (project) ID from list above${NC}"
+		read PROJ
+		local LIST=$PROJ
     fi
 
     echo "+---------------------------- Snapshot and Backup Instances in Parallel ---------------------------+"

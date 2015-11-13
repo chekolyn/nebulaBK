@@ -186,10 +186,10 @@ snapshot_save_single_instance()
 
 		# Image vars:
 		IMAGE_FULL_INFO=$(${GLANCE_CMD} image-show $IMAGE_ID)
-		IMAGE_OWNER=$( echo "${IMAGE_FULL_INFO}" | grep " owner" | sed "s/ //g" | awk -F\| '{ print $3 }')
-		IMAGE_SIZE=$( echo "${IMAGE_FULL_INFO}" | grep size | sed "s/ //g" | awk -F\| '{ print $3 }')
-		IMAGE_NAME=$( echo "${IMAGE_FULL_INFO}" | grep name  | awk -F\| '{ print $3 }' | sed -e "s/^ //g" -e "s/[ ]*$//g")
-		IMAGE_DISK_FORMAT=$( echo "${IMAGE_FULL_INFO}" | grep disk_format |  sed "s/ //g"  |  awk -F\| '{ print $3 }')
+		IMAGE_OWNER=$( echo "${IMAGE_FULL_INFO}" | grep "^| owner" | sed "s/ //g" | awk -F\| '{ print $3 }')
+		IMAGE_SIZE=$( echo "${IMAGE_FULL_INFO}" | grep "^| size" | sed "s/ //g" | awk -F\| '{ print $3 }')
+		IMAGE_NAME=$( echo "${IMAGE_FULL_INFO}" | grep "^| name"  | awk -F\| '{ print $3 }' | sed -e "s/^ //g" -e "s/[ ]*$//g")
+		IMAGE_DISK_FORMAT=$( echo "${IMAGE_FULL_INFO}" | grep "^| disk_format" |  sed "s/ //g"  |  awk -F\| '{ print $3 }')
 
 		# File name:
 		FILE_NAME="${IMAGE_NAME}.${IMAGE_DISK_FORMAT}"
