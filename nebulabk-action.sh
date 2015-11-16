@@ -122,6 +122,7 @@ snapshot_save_single_instance()
 	local DIR=$4
 	local TEST=$5
 	local INSTANCE_NAME
+        local INSTANCE_STOPPED="N"  # Default 
 	local IMAGE
 	local NEW_IMAGE_NAME
 	local DISK_FORMAT
@@ -135,9 +136,10 @@ snapshot_save_single_instance()
 	set_bu_user
 
 	# Instance vars:
-    INSTANCE_FULL_INFO=$(${NOVA_CMD} show ${INSTANCE_ID})
-    # Instance name sed: 1st to remove first space, 2nd to remove trailing spaces.
+        INSTANCE_FULL_INFO=$(${NOVA_CMD} show ${INSTANCE_ID})
+        # Instance name sed: 1st to remove first space, 2nd to remove trailing spaces.
 	INSTANCE_NAME=$(echo "$INSTANCE_FULL_INFO" | grep "^| name" | awk -F\| '{ print $3 }' | sed -e "s/^ //g" -e "s/[ ]*$//g")
+        INSTANCE_STATUS=$(echo "$INSTANCE_FULL_INFO" | grep "^| status" | awk -F\| '{ print $3 }' | sed -e "s/^ //g" -e "s/[ ]*$//g")
 	INSTANCE_IMAGE_SOURCE_ID=$(echo "$INSTANCE_FULL_INFO" | grep image | sed "s/.*(\(.*\)).*/\1/")
 	IMAGE_SOURCE_FULL_INFO=$(${GLANCE_CMD} image-show ${INSTANCE_IMAGE_SOURCE_ID})
 	IMAGE_SOURCE_DISK_FORMAT=$(echo "${IMAGE_SOURCE_FULL_INFO}"| grep disk_format |  sed "s/ //g"  |  awk -F\| '{ print $3 }')
@@ -160,10 +162,41 @@ snapshot_save_single_instance()
 	echo "| ${NOVA_CMD} image-create --show --poll ${INSTANCE_ID}  ${NEW_IMAGE_NAME}"
 
 	if [[ $TEST != "Y" ]] ; then
+		# Check for VM_SHUTDOWN variable in global vars/local-config
+		if [[ $VM_SHUTDOWN == "Y" ]] ; then
+			# Check instance status: 
+			if [[ ${INSTANCE_STATUS} == "ACTIVE" ]] ; then
+				# STOP the Instance:
+				echo "| ** STOP instance name:${INSTANCE_NAME} id:${INSTANCE_ID} date:$(date)"
+				${NOVA_CMD} stop ${INSTANCE_ID}
+
+				# Wait for instance to be shutdown
+				CURRENT_INSTANCE_STATUS=$(${NOVA_CMD} show ${INSTANCE_ID} | grep "^| status" | awk -F\| '{ print $3 }' | sed -e "s/^ //g" -e "s/[ ]*$//g")
+
+				while [[ $CURRENT_INSTANCE_STATUS != "SHUTOFF" ]] ; do
+					# Sleep for 10 seconds while state changes:
+					echo "Waiting for instance  name:${INSTANCE_NAME} id:${INSTANCE_ID} to shutdown ..."
+					sleep 10
+					CURRENT_INSTANCE_STATUS=$(${NOVA_CMD} show ${INSTANCE_ID} | grep "^| status" | awk -F\| '{ print $3 }' | sed -e "s/^ //g" -e "s/[ ]*$//g")
+				done
+
+                                INSTANCE_STOPPED="Y"
+			fi
+		
+		fi
+                
+                # Download the snapshot: 
 		echo "| Image create start: $(date)"
 		${NOVA_CMD} image-create --show --poll ${INSTANCE_ID}  "${NEW_IMAGE_NAME}"
 		echo "| Image create end: $(date)"
-	fi
+
+		# Check if the instance was stopped:
+                if [[ $INSTANCE_STOPPED == "Y" ]] ; then
+			# Start instance:
+			echo "| ** START instance name:${INSTANCE_NAME} id:${INSTANCE_ID} date:$(date)" 
+			${NOVA_CMD} start ${INSTANCE_ID}
+		fi
+	fi 
 
 	echo "|"
 
